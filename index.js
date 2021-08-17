@@ -27,6 +27,12 @@ function init() {
 
     ageField.onchange = resetErrors;
     relationship.onchange = resetErrors;
+    // stop Enter from submitting form
+    ageField.onkeypress =  function(e) {
+        if(e.keyCode == 13) {
+            e.preventDefault();
+            return false;
+        }};
 
     addStyles();
     initializeForm();
