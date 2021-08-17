@@ -1,9 +1,7 @@
-// age
-// relationship
-// smoker
-
+// this is the list we maintain
 var householdList = [];
 
+// mostly absorbing the onerous code to locate the html elements
 var buttons = document.getElementsByTagName("button");
 var addButton = document.getElementsByClassName("add")[0];
 var submitButton = buttons.item(1);
@@ -11,25 +9,36 @@ var ageField = document.getElementById("age");
 var relationship = document.getElementById("rel");
 var smoker = document.getElementsByName("smoker")[0];
 var list = document.getElementsByTagName("ol")[0];
+var debug = document.getElementsByClassName("debug")[0];
 var errorMessages = [];
-var errors = null;
+var errorsDiv ;
 
-
-function start() {
+function init() {
     householdList = [];
+
     addButton.setAttribute("type","button");
     addButton.addEventListener("click", tryAdd);
-    submitButton.setAttribute("type",'');
-    errors = document.createElement('div');
-    document.forms[0].append(errors);
+
+    submitButton.setAttribute("type",'button');
+    submitButton.addEventListener("click", serialize);
+
+    errorsDiv = document.createElement('div');
+    addButton.parentElement.append(errorsDiv);
+
+    ageField.onchange = resetErrors;
+    relationship.onchange = resetErrors;
+
     addStyles();
     initializeForm();
 }
 
 function addStyles() {
-    errors.style.color = 'red';
+    // this should be done with css, I am just avoiding changing the html
+    errorsDiv.style.color = 'red';
     document.body.style.fontFamily = "arial";
-    document.body.style.lineHeight = '1.8';
+    document.body.style.lineHeight = '30px';
+    document.body.style.fontSize = '13px';
+    document.body.style.paddingLeft = '20px';
     var labels = document.getElementsByTagName('label');
     for (var i=0; i<labels.length; i++) {
         labels[i].style.position = "relative";
@@ -46,15 +55,28 @@ function addStyles() {
         sel[i].style.left = "120px";
     }
 
+    addButton.innerHTML = "Add household member";
+    addButton.style.marginTop = "10px";
+
+    submitButton.innerHTML = "Submit list";
+    submitButton.style.marginTop = "20px";
+
+}
+
+function resetErrors() {
+    errorMessages = [];
+    while (errorsDiv.childElementCount > 0) {
+        errorsDiv.removeChild(errorsDiv.childNodes[0]);
+    }
 }
 
 function initializeForm() {
-    errorMessages = [];
     relationship.options[0].label = "--------";
     relationship.options[5].label = "Grandparent";
     relationship.options.selectedIndex = 0;
     ageField.value = '';
     smoker.checked = false;
+    resetErrors();
 }
 
 function tryAdd() {
@@ -67,19 +89,21 @@ function tryAdd() {
     if (relationship.selectedIndex === 0) {
         errorMessages.push("Missing relationship");
     }
-    errors.innerHTML = '';
     for (var i=0; i<errorMessages.length; i++) {
-        errors.innerHTML += errorMessages[i] + '<br/>';
+        var ediv = document.createElement('div');
+        ediv.innerHTML = errorMessages[i];
+        errorsDiv.appendChild(ediv);
     }
     if (errorMessages.length === 0) {
         householdList.push({
             relationship: rel,
             age: age,
             smoker: smoker.checked
-        })
+        });
+        updateList();
+        initializeForm();
     }
-    updateList();
-    initializeForm();
+
 }
 
 function listDiv(text, width) {
@@ -94,9 +118,7 @@ function listDiv(text, width) {
 
 function deleteFromList(event) {
     var ix = Number(event.target.id);
-    console.log('before', ix,  householdList);
     householdList.splice(ix, 1);
-    console.log('after', ix,  householdList);
     updateList();
 }
 
@@ -116,7 +138,15 @@ function updateList() {
         li.appendChild(deleteControl);
         list.appendChild(li);
     }
+    debug.style.display = 'none';
 }
 
-start();
+function serialize() {
+    var result = JSON.stringify(householdList, null ,'\t');
 
+    debug.innerHTML = result;
+    debug.style.display = "block";
+    debug.style.lineHeight = '1.7';
+}
+
+init();
